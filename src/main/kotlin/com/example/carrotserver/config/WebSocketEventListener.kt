@@ -17,36 +17,12 @@ class WebSocketEventListener(private val messagingTemplate: SimpMessageSendingOp
     /* 입장 이벤트 처리 */
     @EventListener
     internal fun handleWebSocketConnectListener(event: SessionConnectEvent) {
-        val headers = event.message.headers
-        val user = SimpMessageHeaderAccessor.getUser(headers)
-
-        if (user == null) {
-            logger.info("입장 이벤트 발생")
-            return
-        }
-
-        val message = "${user.name}님이 대화방에 접속하셨습니다."
-        val messageDto = MessageDto(MessageType.JOIN, message, user.name)
-
-        logger.info(messageDto.toString())
-        messagingTemplate.convertAndSend("/topic/public", messageDto)
+        logger.info("입장 이벤트 발생")
     }
 
     /* 퇴장 이벤트 처리 */
     @EventListener
     internal fun handleWebSocketDisconnectListener(event: SessionDisconnectEvent) {
-        val headers = event.message.headers
-        val user = SimpMessageHeaderAccessor.getUser(headers)
-
-        if (user == null) {
-            logger.info("퇴장 이벤트 발생")
-            return
-        }
-
-        val message = "${user.name}님이 대화방에서 퇴장하였습니다."
-        val messageDto = MessageDto(MessageType.LEAVE, message, user.name)
-
-        logger.info(messageDto.toString())
-        messagingTemplate.convertAndSend("/topic/public", messageDto)
+        logger.info("퇴장 이벤트 발생")
     }
 }

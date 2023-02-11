@@ -12,5 +12,5 @@ class ChatRoom(
     val id: Long? = null,
 
     @OneToMany(mappedBy = "chatRoom")
-    val chatRooms: MutableList<UserChat> = arrayListOf()
+    val chatRooms: MutableList<UserChat> = arrayListOf(),
 )

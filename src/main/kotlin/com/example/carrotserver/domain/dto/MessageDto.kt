@@ -1,11 +1,20 @@
 package com.example.carrotserver.domain.dto
 
 import com.example.carrotserver.domain.MessageType
-import com.fasterxml.jackson.annotation.JsonIgnore
 
 data class MessageDto(
-    @JsonIgnore
-    var type: MessageType? = null,
     var content: String?,
-    var sender: String
-)
+    var sender: String,
+    var channelId: String
+) {
+
+    var type: MessageType = MessageType.CHAT
+
+    internal fun newConnect() {
+        this.type = MessageType.JOIN
+    }
+
+    internal fun closeConnect() {
+        this.type = MessageType.LEAVE
+    }
+}

@@ -2,16 +2,22 @@ package com.example.carrotserver.controller
 
 import com.example.carrotserver.domain.dto.MessageDto
 import com.example.carrotserver.domain.dto.UserDto
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.handler.annotation.SendTo
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor
+import org.springframework.messaging.simp.SimpMessageSendingOperations
+import org.springframework.messaging.simp.annotation.SendToUser
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class ChatController {
+class ChatController(private val simpMessageSendingOperations: SimpMessageSendingOperations) {
+    private val logger = LoggerFactory.getLogger(ChatController::class.java)
+
     /**
      * [ STOMP 흐름 ]
      * - 1. 클라이언트는 enableSimpleBroker에 등록한 주소로 시작하는 주소를 구독한다. (/topic/(*))
@@ -29,14 +35,20 @@ class ChatController {
         return messageDto
     }
 
+    @MessageMapping("/test")
+    internal fun test(@Payload messageDto: MessageDto) {
+        logger.info(messageDto.toString())
+        simpMessageSendingOperations.convertAndSend("/queue/channel/" + messageDto.channelId, messageDto.sender + ": " + messageDto.content)
+    }
+
     /**
      * - 채팅방에 유저가 접속할 때 실행되는 메서드
      * - session <-- 유저 추가
      */
-    @MessageMapping("/addUser")
-    internal fun addUser(@Payload messageDto: MessageDto, headerAccessor: SimpMessageHeaderAccessor): MessageDto? {
-        headerAccessor.sessionAttributes?.set("user", messageDto.sender) ?: return null
-        return messageDto
+    @MessageMapping("/addUser")  /* 메세지 발행: /app/addUser */
+    internal fun addUser(@Payload messageDto: MessageDto, headerAccessor: SimpMessageHeaderAccessor) {
+        logger.info("/app/addUser/" + messageDto.channelId + "<-- $messageDto")
+        simpMessageSendingOperations.convertAndSend("/topic/channel/" + messageDto.channelId, messageDto)
     }
 
     /**

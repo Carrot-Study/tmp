@@ -12,7 +12,7 @@ class WebSocketConfig: WebSocketMessageBrokerConfigurer {
     /* Websocket 연결을 위한 엔드포인트 지정해주는 메서드 */
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry
-            .addEndpoint("/chat")
+            .addEndpoint("/chat", "/test")
             .setAllowedOrigins("*")
     }
 
