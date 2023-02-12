@@ -18,7 +18,8 @@ class WebSocketConfig: WebSocketMessageBrokerConfigurer {
 
     /* 엔드포인트에 대한 prefix 지정 */
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
-        registry.enableSimpleBroker("/topic", "/queue")   /* Server -> Client Endpoint (Client 구독 경로) */
-        registry.setApplicationDestinationPrefixes("/app")       /* Client -> Server Endpoint */
+        registry
+            .setApplicationDestinationPrefixes("/app")
+            .enableSimpleBroker("/topic", "/queue")   /* Server -> Client Endpoint (Client 구독 경로) */
     }
 }

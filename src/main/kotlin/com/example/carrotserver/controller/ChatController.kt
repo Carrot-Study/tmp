@@ -14,31 +14,41 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
+/**
+ * [ STOMP 테스트 정리 ]
+ * - 서로 다른 EndPoint에 접속해도 소켓 연결 가능
+ * - 클라이언트 구독 경로 : @SendTo 어노테이션에 지정된 주소
+ *      - /topic/tmp, /queue/tmp ...
+ * - 클라이언트 전송 경로 : setApplicationDestinationPrefixes 지정 주소 + @MessageMapping 지정 주소
+ *      - /app/test1, /app/test2 ...
+ *
+ * [ 추가적으로 공부할 내용 ]
+ * - sendTo는 정상 작동하는데 sendToUser 작동하지 않는 이유?
+ * - 외부 메세지 브로커 연동 (RabbitMQ, Redis pub/sub 등), Spring 자체 브로커는 인메모리 브로커 (모니터링 불편)
+ * - 브로커 릴레이 개념과 전반적 흐름에 대해 복습
+ * - https://velog.io/@koseungbin/WebSocket 쭉 따라가보기
+ */
+
 @RestController
 class ChatController(private val simpMessageSendingOperations: SimpMessageSendingOperations) {
     private val logger = LoggerFactory.getLogger(ChatController::class.java)
-
-    /**
-     * [ STOMP 흐름 ]
-     * - 1. 클라이언트는 enableSimpleBroker에 등록한 주소로 시작하는 주소를 구독한다. (/topic/(*))
-     * - 2. 클라이언트 -> 서버 -> 발행 setApplicationDestinationPrefixes에 등록한 주소로 시작하는 주소로 발행한다.
-     * - 3. @MessageMapping : prefix + destination queue (/app/chat)
-     * - 4. @SendTo : 이 곳에 지정된 path를 구독한 모든 구독자들에게 메세지 브로드캐스팅
-
-     *  SendTo는 1:N로 메세지를 뿌릴 때 사용하고 보통 경로가 /topic으로 시작된다
-     *  SendToUser는 1:!로 메세지를 뿌릴 때 사용하고 보통 경로가 /queue로 시작한다.
-     */
-
-    @MessageMapping("/chat")    /* Destination Queue: /app/chat */
-    @SendTo("/topic/public")    /* /topic/public 구독 중인 클라이언트에게 전송 */
-    internal fun sendMessage(@Payload messageDto: MessageDto): MessageDto? {
-        return messageDto
+    @MessageMapping("/test")    /* Destination Queue: /app/test */
+    @SendTo("/queue/tmp")       /* 클라이언트 구독 경로: /queue/tmp */
+    internal fun test(@Payload messageDto: MessageDto): String {
+        logger.info(messageDto.toString())
+        return "${messageDto.sender} : ${messageDto.content}"
     }
 
-    @MessageMapping("/test")
-    internal fun test(@Payload messageDto: MessageDto) {
-        logger.info(messageDto.toString())
-        simpMessageSendingOperations.convertAndSend("/queue/channel/" + messageDto.channelId, messageDto.sender + ": " + messageDto.content)
+    @MessageMapping("/test2")
+    @SendToUser("/queue/tmp2")
+    internal fun test2(message: String): String {
+        return message
+    }
+
+    @MessageMapping("/test3")
+    @SendTo("/topic/tmp3")
+    internal fun test3(message: String): String {
+        return message
     }
 
     /**
